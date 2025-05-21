@@ -2,8 +2,8 @@ const appConfigs = {
     hostingPort: 5000,
     apiSettings: {
         enabledApi: true,
-        apiUrl: "https://l1-proxy3.lumigame.com/game-api",
-        authUrl: "https://l1-auth3.lumigame.com",
+        apiUrl: "https://l1-proxy1.lumigame.com/game-api",
+        authUrl: "https://l1-auth1.lumigame.com",
         client: {
             id: "game-server",
             secret: "gameserver@20luminet&",
@@ -24,7 +24,7 @@ const appConfigs = {
     },
     enabledLogs: true,
     database: {
-        url: "mongodb://lmn_backend:LmnBackend@10.10.50.12:39103,10.10.50.13:39103,10.10.50.14:39103/",
+        url: "mongodb://lmn_backend:LmnBackend@10.10.50.12:39101,10.10.50.13:39101,10.10.50.14:39101/?replicaSet=L1pLocal&appName=marblefootball",
         options: {
             dbName: "minigame",
             useNewUrlParser: true,
@@ -38,7 +38,7 @@ const appConfigs = {
         env: "DEV",
     },
     authenticateSettings: {
-        url: "https://l1-auth3.lumigame.com",
+        url: "https://l1-auth1.lumigame.com",
         id: "game-services",
         secret: "gameservices@20luminet&",
         requestTimeout: 10000,
@@ -46,7 +46,7 @@ const appConfigs = {
         audiences: ["api", "admin-api"],
     },
     userServiceSettings: {
-        url: "https://l1-proxy3.lumigame.com/user",
+        url: "https://l1-proxy1.lumigame.com/user",
     },
     adminSecretKey: "asWDEerfOIdgsdqRTFabvmgh",
     metrics: {
@@ -55,7 +55,7 @@ const appConfigs = {
     },
     enableMsgpackParser: false,
     gameManagementApiSettings: {
-        BASE: "https://l1-proxy3.lumigame.com/game-management-service",
+        BASE: "https://l1-proxy1.lumigame.com/game-management-service",
     },
     disableCors: true,
     otel: {
@@ -69,7 +69,7 @@ const appConfigs = {
     },
     liveStreamServer: "https://d1aof1lwumql9k.cloudfront.net/104_STAGING/",
     gameResultSettings: {
-        baseUrl: "https://l1-result3.lumigame.com",
+        baseUrl: "https://l1-result1.lumigame.com",
         id: "Game Service",
         key: "58148de3-b895-4f6b-82de-a35eed1b4b28",
     },

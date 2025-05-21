@@ -2,8 +2,10 @@ import { TableGameDefinition } from "sc-game-base/src/table";
 import { Duration as BaseDuration } from "sc-game-base/src/core/game-definition";
 export default class GameDefinition extends TableGameDefinition {
     declare durations: Duration;
+    maxVideoLength: number;
     constructor(gameSettings: GameSettings, generateResult: Function, settle: Function, generateRawResultForHash: Function) {
         super(gameSettings, generateResult, settle, generateRawResultForHash);
+        this.maxVideoLength = gameSettings.maxVideoLength;
     }
 }
 
@@ -13,6 +15,7 @@ export type GameSettings = {
     configName: string;
     durations: Duration;
     provablyFair?: boolean;
+    maxVideoLength: number;
     choices: string[];
     choicesMapper: any;
     hedgeBetGroups: any[];

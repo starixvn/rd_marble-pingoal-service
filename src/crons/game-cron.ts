@@ -8,6 +8,7 @@ import axios from "axios";
 import { retry } from "../helpers";
 import { generateVideoName } from "../helpers/result-helper";
 import defaultVideoTimelines from "../timelines/video-timelines";
+import Chance from "chance";
 
 export default class GameCron extends Table.Crons.TableGameCron {
     declare gameData: GameData;
@@ -54,39 +55,29 @@ export default class GameCron extends Table.Crons.TableGameCron {
         const retries = 3;
 
         try {
-            const [firstHalfTimeline, secondHalfTimeline] = await Promise.all([
-                retry(() => this.getVideoTimelineForHalf(this.gameData.result.firstHalfVideo), retries, delay).catch((error) => {
-                    this.logService.logError(`In match ${this.gameData.roundId}, failed to fetch first half timeline: ${error}`);
-                    return this.getDefaultVideoTimeline(this.gameData.result.firstHalf, true);
-                }),
-                retry(() => this.getVideoTimelineForHalf(this.gameData.result.secondHalfVideo), retries, delay).catch((error) => {
-                    this.logService.logError(`In match ${this.gameData.roundId}, failed to fetch second half timeline: ${error}`);
-                    return this.getDefaultVideoTimeline(this.gameData.result.secondHalf, false);
-                }),
+            const [videoTimeline] = await Promise.all([
+                retry(() => this.getVideoTimelineForHalf(this.gameData.result.videoName), retries, delay).catch((error) => {
+                    this.logService.logError(`In match ${this.gameData.roundId}, failed to fetch video timeline: ${error}`);
+                    return this.getDefaultVideoTimeline(this.gameData.result.videoName);
+                })
             ]);
 
-            this.gameData.result.firstHalfTimeline = firstHalfTimeline;
-            this.gameData.result.secondHalfTimeline = secondHalfTimeline;
+            this.gameData.result.videoTimeline = videoTimeline;
+
         } catch (error) {
             this.logService.logError(`Unexpected error fetching video timelines: ${error}`);
-            this.gameData.result.firstHalfTimeline = this.getDefaultVideoTimeline(this.gameData.result.firstHalf, true);
-            this.gameData.result.secondHalfTimeline = this.getDefaultVideoTimeline(this.gameData.result.secondHalf, false);
+            this.gameData.result.videoTimeline = this.getDefaultVideoTimeline(this.gameData.result.videoName);
         }
     }
 
-    getDefaultVideoTimeline(result: string, isFirstHalf: boolean) {
+    getDefaultVideoTimeline(result: string) {
         const videoName = generateVideoName(result, {}, true);
 
-        if (isFirstHalf) {
-            this.gameData.result.firstHalfVideo = videoName;
-        } else {
-            this.gameData.result.secondHalfVideo = videoName;
-        }
+        this.gameData.result.videoName = videoName;
 
-        const videoTimeline = (defaultVideoTimelines as Record<string, number[]>)[`${videoName}_${result}`];
+        const videoTimeline = (defaultVideoTimelines as any)[`${videoName}_${result}`];
 
         this.logService.logWarning(`Get default video timeline for ${videoName}_${result}: ${videoTimeline}`);
-
         return videoTimeline;
     }
 
@@ -98,12 +89,9 @@ export default class GameCron extends Table.Crons.TableGameCron {
 
     publishVideoStream() {
         const videoResult = {
-            firstHalfVideo: this.gameData.result.firstHalfVideo,
-            secondHalfVideo: this.gameData.result.secondHalfVideo,
-            firstHalfTimeline: this.gameData.result.firstHalfTimeline,
-            secondHalfTimeline: this.gameData.result.secondHalfTimeline,
-            firstHalf: this.gameData.result.firstHalf,
-            secondHalf: this.gameData.result.secondHalf,
+            videoName: this.gameData.result.videoName,
+            videoTimeline: this.gameData.result.videoTimeline,
+            events: this.gameData.result.events,
         };
 
         this.runningRoundInfoPublisher.publishToAllUsers({ videoResult });
@@ -129,6 +117,7 @@ export default class GameCron extends Table.Crons.TableGameCron {
         }
 
         const remainingTime = this.gameData.remainingTime;
+        console.log(`remainingTime: `, remainingTime);
 
         if (remainingTime === durations.startingRound) {
             await this.publishTournament();
@@ -139,6 +128,8 @@ export default class GameCron extends Table.Crons.TableGameCron {
             this.bot?.reset();
 
             await this.generateRoundData();
+            this.calculateStreamGap();
+            await this.getVideoTimeline();
         }
 
         if (remainingTime === durations.placingBets) {
@@ -150,8 +141,8 @@ export default class GameCron extends Table.Crons.TableGameCron {
         }
 
         if (remainingTime === durations.streamingVideo) {
-            await this.getVideoTimeline();
             this.publishVideoStream();
+            this.syncRemainingTimeWithVideoLength();
         }
 
         if (remainingTime < 0) {
@@ -170,5 +161,22 @@ export default class GameCron extends Table.Crons.TableGameCron {
         const { placingBets, lockingBet } = this.definition.durations;
 
         return remainingTime < placingBets && remainingTime > lockingBet;
+    }
+
+    private calculateStreamGap() {
+        console.log('max video length', this.definition.maxVideoLength);
+        const videoLength = this.getRandomVideoDuration();
+        console.log(`videoLength: ${videoLength}`);
+        this.gameData.streamGap = this.definition.maxVideoLength - videoLength;
+        console.log(`stream gap ${this.gameData.streamGap}`);
+    }
+
+    private syncRemainingTimeWithVideoLength() {
+        console.log(`remaining time synce with video timeline`);
+        this.gameData.remainingTime -= this.gameData.streamGap;
+    }
+
+    private getRandomVideoDuration() {
+        return new Chance().integer({ min: 30, max: this.definition.maxVideoLength });
     }
 }

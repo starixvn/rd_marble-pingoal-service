@@ -4,24 +4,21 @@ import { MatchType } from "./tournaments";
 
 export type ResultType = {
     tournamentId?: mongoose.Types.ObjectId;
-    firstHalf: string;
-    secondHalf: string;
-    firstHalfVideo: string;
-    secondHalfVideo: string;
+    score: string;
+    videoName: string;
+    videoDuration?: number;
+    videoTimeline?: number[];
+    events?: string[];
     overUnderValue: number;
     homeWinsOnDraw: boolean;
     penalty: { home: number; away: number };
-    firstHalfTimeline?: number[];
-    secondHalfTimeline?: number[];
 };
 
 const resultSchema = new mongoose.Schema<ResultType>(
     {
         tournamentId: { type: mongoose.Schema.Types.ObjectId },
-        firstHalf: { type: String },
-        secondHalf: { type: String },
-        firstHalfVideo: { type: String },
-        secondHalfVideo: { type: String },
+        score: { type: String },
+        videoName: { type: String },
         overUnderValue: { type: Number },
         homeWinsOnDraw: { type: Boolean },
         penalty: { type: Object },

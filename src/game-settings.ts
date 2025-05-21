@@ -9,8 +9,9 @@ export default {
         startingRound: 141,
         placingBets: 136,
         lockingBet: 109,
-        streamingVideo: 108,
+        streamingVideo: 108
     },
+    maxVideoLength: 100,
     choices: Object.values(BET_CHOICES),
     choicesMapper: { home: 1, away: 2, draw: 3, over: 4, under: 5, odd: 6, even: 7 },
     hedgeBetGroups: [

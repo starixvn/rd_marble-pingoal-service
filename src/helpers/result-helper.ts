@@ -17,31 +17,27 @@ export const generateResult = (data: DataResultType): ResultType => {
     const randomMode = data.randomMode || 1;
     const numberOfVideos = data.numberOfVideos || DEFAULT_NUMBER_OF_VIDEOS;
 
-    const firstHalf = generateResultForHalf({ randomMode, numberOfVideos, pool });
-    const secondHalf = generateResultForHalf({ randomMode, numberOfVideos, pool });
-    const videoInfo = getVideoInfoFromResult(firstHalf, secondHalf, numberOfVideos);
+    const score = generateResultForHalf({ randomMode, numberOfVideos, pool });
+    const videoInfo = getVideoInfoFromResult(score, numberOfVideos);
     const homeWinsOnDraw = chance.bool();
     const penalty = generatePenaltyResult(homeWinsOnDraw);
-
-    return {
-        firstHalf,
-        secondHalf,
+    const result = {
+        score,
         ...videoInfo,
         overUnderValue: matchConfig.ou,
         homeWinsOnDraw,
         penalty,
     };
+    return result;
 };
 
 export const generateResultFromAdminRawResult = (roundResult: ResultType, numberOfVideos: Record<string, number>): ResultType => {
-    const firstHalf = roundResult.firstHalf || "0";
-    const secondHalf = roundResult.secondHalf || "0";
-    const videoInfo = getVideoInfoFromResult(firstHalf, secondHalf, numberOfVideos);
+    const score = roundResult.score || "0:0";
+    const videoInfo = getVideoInfoFromResult(score, numberOfVideos);
     const penalty = generatePenaltyResult(roundResult.homeWinsOnDraw);
 
     return {
-        firstHalf,
-        secondHalf,
+        score,
         homeWinsOnDraw: roundResult.homeWinsOnDraw,
         penalty,
         ...videoInfo,
@@ -50,16 +46,10 @@ export const generateResultFromAdminRawResult = (roundResult: ResultType, number
 };
 
 export const getSettlementResult = (roundResult: ResultType): SettlementResultType => {
-    const { firstHalf, secondHalf } = roundResult;
+    const { score } = roundResult;
 
-    const firstHalfHomeGoals = firstHalf.split("H").length - 1;
-    const firstHalfAwayGoals = firstHalf.split("A").length - 1;
-
-    const secondHalfHomeGoals = secondHalf.split("H").length - 1;
-    const secondHalfAwayGoals = secondHalf.split("A").length - 1;
-
-    const homeGoals = firstHalfHomeGoals + secondHalfHomeGoals;
-    const awayGoals = firstHalfAwayGoals + secondHalfAwayGoals;
+    const homeGoals = parseInt(score.split(":")[0] ?? "0");
+    const awayGoals = parseInt(score.split(":")[1] ?? "0");
 
     const isOver = homeGoals + awayGoals > roundResult.overUnderValue;
     const isOdd = (homeGoals + awayGoals) % 2 === 1;
@@ -82,11 +72,9 @@ const generateResultForHalf = (data: DataResultType) => {
     const scoreResult = getScoreFromPool(data);
 
     const [homeGoals, awayGoals] = scoreResult.split("-").map(Number);
-    const sequence = Array(homeGoals).fill("H").concat(Array(awayGoals).fill("A"));
+    const score = `${homeGoals}:${awayGoals}`;
 
-    const result = shuffle(sequence).join("");
-
-    return result || "0";
+    return score;
 };
 
 const getScoreFromPool = (data: DataResultType) => {
@@ -96,13 +84,11 @@ const getScoreFromPool = (data: DataResultType) => {
     return pool[index];
 };
 
-const getVideoInfoFromResult = (firstHalf: string, secondHalf: string, numberOfVideos: Record<string, number>) => {
-    const firstHalfVideo = generateVideoName(firstHalf, numberOfVideos);
-    const secondHalfVideo = generateVideoName(secondHalf, numberOfVideos, false, firstHalfVideo);
+const getVideoInfoFromResult = (score: string, numberOfVideos: Record<string, number>) => {
+    const videoName = generateVideoName(score, numberOfVideos);
 
     return {
-        firstHalfVideo,
-        secondHalfVideo,
+        videoName,
     };
 };
 

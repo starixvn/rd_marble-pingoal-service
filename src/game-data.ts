@@ -17,6 +17,7 @@ export default class GameData extends TableGameData {
     liveStreamServer = "";
     tournament = {} as ITournament;
     publishedTournament = {} as ITournament;
+    streamGap = 0;
 }
 
 export type RealPlayer = {
